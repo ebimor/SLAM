@@ -46,7 +46,6 @@ namespace examples {
 struct PoseBase{
   virtual ~PoseBase(){};
 
-  virtual void operator>>(std::istream& input){};
   // The name of the data type in the g2o file format.
   static std::string name() {
     return "VERTEX";
@@ -59,11 +58,10 @@ struct Pose2d : public PoseBase {
   double y;
   double yaw_radians;
 
-  void operator>>(std::istream& input) {
-    input >> x >> y >> yaw_radians;
+  Pose2d(double x_, double y_, double yaw_):x(x_), y(y_), yaw_radians(yaw_)
+  {
     // Normalize the angle between -pi to pi.
     yaw_radians = NormalizeAngle(yaw_radians);
-
   }
 
   // The name of the data type in the g2o file format.
@@ -83,9 +81,7 @@ struct Pose2dXY :public PoseBase {
     return "VERTEX_XY";
   }
 
-  void operator>>(std::istream& input) {
-    input >> x >> y;
-  }
+  Pose2dXY(double x_, double y_):x(x_), y(y_){}
 
 };
 
@@ -93,7 +89,7 @@ struct ConstraintBase{
   virtual ~ConstraintBase(){};
   // The name of the data type in the g2o file format.
 
-  virtual void operator>>(std::istream& input){};
+  virtual void deposit(std::istream& input) = 0;
 
   static std::string name() {
     return "EDGE";
@@ -114,7 +110,9 @@ struct Constraint2d : public ConstraintBase {
   // entries are x, y, and yaw.
   Eigen::Matrix3d information;
 
-  void operator>>(std::istream& input) {
+  Constraint2d(){};
+
+  void deposit(std::istream& input) {
     input >> id_begin >> id_end >> x >>
         y >> yaw_radians >>
         information(0, 0) >> information(0, 1) >>
@@ -149,7 +147,10 @@ struct Constraint2dXY : public ConstraintBase {
   // entries are x, y.
   Eigen::Matrix2d information;
 
-  void operator>>(std::istream& input) {
+  Constraint2dXY(){};
+
+
+  void deposit(std::istream& input) {
     input >> id_begin >> id_end >> x >>
         y >> information(0, 0) >> information(0, 1) >>
         information(1, 1);
