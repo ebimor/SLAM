@@ -53,11 +53,11 @@ namespace examples {
 
 // Constructs the nonlinear least squares optimization problem from the pose
 // graph constraints.
-/*
-void BuildOptimizationProblem(const std::vector<ConstraintBase>& constraints,
-                              std::map<int, PoseBase>& poses,
+
+void BuildOptimizationProblem(const std::vector<ConstraintBase*>& constraints,
+                              std::map<int, PoseBase*>& poses,
                               ceres::Problem* problem) {
-  CHECK(poses.empty());
+  CHECK(!poses.empty());
   CHECK(problem != NULL);
   if (constraints.empty()) {
     LOG(INFO) << "No constraints, no problem to optimize.";
@@ -68,35 +68,40 @@ void BuildOptimizationProblem(const std::vector<ConstraintBase>& constraints,
   ceres::LocalParameterization* angle_local_parameterization =
       AngleLocalParameterization::Create();
 
-  for (std::vector<ConstraintBase>::const_iterator constraints_iter =
+  for (std::vector<ConstraintBase*>::const_iterator constraints_iter =
            constraints.begin();
        constraints_iter != constraints.end(); ++constraints_iter) {
 
-    const Constraint2d& constraint = *constraints_iter;
+    const Constraint2d* constraint = static_cast<Constraint2d*>(*constraints_iter);
 
-    std::map<int, PoseBase>::iterator pose_begin_iter =
-        poses.find(constraint.id_begin);
-    CHECK(pose_begin_iter != poses->end())
-        << "Pose with ID: " << constraint.id_begin << " not found.";
-    std::map<int, Pose2d>::iterator pose_end_iter =
-        poses.find(constraint.id_end);
+    std::map<int, PoseBase*>::iterator pose_begin_iter =
+        poses.find(constraint->id_begin);
+    CHECK(pose_begin_iter != poses.end())
+        << "Pose with ID: " << constraint->id_begin << " not found.";
+    Pose2d* pose_begin =  static_cast<Pose2d*>(poses[pose_begin_iter->first]);
+
+
+    std::map<int, PoseBase*>::iterator pose_end_iter =
+        poses.find(constraint->id_end);
     CHECK(pose_end_iter != poses.end())
-        << "Pose with ID: " << constraint.id_end << " not found.";
+        << "Pose with ID: " << constraint->id_end << " not found.";
+    Pose2d* pose_end =  static_cast<Pose2d*>(poses[pose_end_iter->first]);
+
 
     const Eigen::Matrix3d sqrt_information =
-        constraint.information.llt().matrixL();
+        constraint->information.llt().matrixL();
     // Ceres will take ownership of the pointer.
     ceres::CostFunction* cost_function = PoseGraph2dErrorTerm::Create(
-        constraint.x, constraint.y, constraint.yaw_radians, sqrt_information);
+        constraint->x, constraint->y, constraint->yaw_radians, sqrt_information);
     problem->AddResidualBlock(
-        cost_function, loss_function, &pose_begin_iter->second.x,
-        &pose_begin_iter->second.y, &pose_begin_iter->second.yaw_radians,
-        &pose_end_iter->second.x, &pose_end_iter->second.y,
-        &pose_end_iter->second.yaw_radians);
+        cost_function, loss_function, &pose_begin->x,
+        &pose_begin->y, &pose_begin->yaw_radians,
+        &pose_end->x, &pose_end->y,
+        &pose_end->yaw_radians);
 
-    problem->SetParameterization(&pose_begin_iter->second.yaw_radians,
+    problem->SetParameterization(&pose_begin->yaw_radians,
                                 angle_local_parameterization);
-    problem->SetParameterization(&pose_end_iter->second.yaw_radians,
+    problem->SetParameterization(&pose_end->yaw_radians,
                                 angle_local_parameterization);
   }
 
@@ -107,12 +112,12 @@ void BuildOptimizationProblem(const std::vector<ConstraintBase>& constraints,
   // internal damping which mitigate this issue, but it is better to properly
   // constrain the gauge freedom. This can be done by setting one of the poses
   // as constant so the optimizer cannot change it.
-  std::map<int, Pose2d>::iterator pose_start_iter =
-      poses->begin();
-  CHECK(pose_start_iter != poses->end()) << "There are no poses.";
-  problem->SetParameterBlockConstant(&pose_start_iter->second.x);
-  problem->SetParameterBlockConstant(&pose_start_iter->second.y);
-  problem->SetParameterBlockConstant(&pose_start_iter->second.yaw_radians);
+  std::map<int, PoseBase*>::iterator pose_start_iter = poses.begin();
+  CHECK(pose_start_iter != poses.end()) << "There are no poses.";
+  Pose2d* pose_start =  static_cast<Pose2d*>(poses[pose_start_iter->first]);
+  problem->SetParameterBlockConstant(&pose_start->x);
+  problem->SetParameterBlockConstant(&pose_start->y);
+  problem->SetParameterBlockConstant(&pose_start->yaw_radians);
 }
 
 // Returns true if the solve was successful.
@@ -130,7 +135,7 @@ bool SolveOptimizationProblem(ceres::Problem* problem) {
 
   return summary.IsSolutionUsable();
 }
-*/
+
 // Output the poses to the file with format: ID x y yaw_radians.
 bool OutputPoses(const std::string& filename,
                  std::map<int, PoseBase*> &poses) {
@@ -272,16 +277,15 @@ int main(int argc, char** argv) {
 
   CHECK(ceres::examples::OutputPoses("poses_original.txt", poses))
       << "Error outputting to poses_original.txt";
-  /*
+
   ceres::Problem problem;
-  ceres::examples::BuildOptimizationProblem(constraints, &poses, &problem);
+  ceres::examples::BuildOptimizationProblem(constraints, poses, &problem);
 
   CHECK(ceres::examples::SolveOptimizationProblem(&problem))
       << "The solve was not successful, exiting.";
 
   CHECK(ceres::examples::OutputPoses("poses_optimized.txt", poses))
       << "Error outputting to poses_original.txt";
-      */
 
   return 0;
 }
