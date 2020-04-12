@@ -20,7 +20,7 @@ pose-to-landmarks constraints.
 
 This data is obtained via processing the input intel.data in homework 10 of the Robot Mapping course by Cyrill Stachniss.
 Use this [script](https://github.com/ebimor/SLAM/blob/master/lsslam_framework/octave/create_g2o.m)! Other avialable data for intel.g2o
-does not include the pose-to-landmark edges. FWIW, this homework has been also done via octave and g20 library and all of the codes
+does not include the pose-to-landmark edges. FWIW, this homework has been also done via octave and g2o library and all of the codes
 are available in this repository.
 
 Compile the package
