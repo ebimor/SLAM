@@ -72,37 +72,73 @@ void BuildOptimizationProblem(const std::vector<ConstraintBase*>& constraints,
            constraints.begin();
        constraints_iter != constraints.end(); ++constraints_iter) {
 
-    const Constraint2d* constraint = static_cast<Constraint2d*>(*constraints_iter);
+    if ((*constraints_iter)->type == ceres::examples::EDGE_SE2){
+      //this edge is from pose to pose
+      const Constraint2d* constraint = static_cast<Constraint2d*>(*constraints_iter);
 
-    std::map<int, PoseBase*>::iterator pose_begin_iter =
-        poses.find(constraint->id_begin);
-    CHECK(pose_begin_iter != poses.end())
-        << "Pose with ID: " << constraint->id_begin << " not found.";
-    Pose2d* pose_begin =  static_cast<Pose2d*>(poses[pose_begin_iter->first]);
-
-
-    std::map<int, PoseBase*>::iterator pose_end_iter =
-        poses.find(constraint->id_end);
-    CHECK(pose_end_iter != poses.end())
-        << "Pose with ID: " << constraint->id_end << " not found.";
-    Pose2d* pose_end =  static_cast<Pose2d*>(poses[pose_end_iter->first]);
+      std::map<int, PoseBase*>::iterator pose_begin_iter =
+          poses.find(constraint->id_begin);
+      CHECK(pose_begin_iter != poses.end())
+          << "Pose with ID: " << constraint->id_begin << " not found.";
+      Pose2d* pose_begin =  static_cast<Pose2d*>(poses[pose_begin_iter->first]);
 
 
-    const Eigen::Matrix3d sqrt_information =
-        constraint->information.llt().matrixL();
-    // Ceres will take ownership of the pointer.
-    ceres::CostFunction* cost_function = PoseGraph2dErrorTerm::Create(
-        constraint->x, constraint->y, constraint->yaw_radians, sqrt_information);
-    problem->AddResidualBlock(
-        cost_function, loss_function, &pose_begin->x,
-        &pose_begin->y, &pose_begin->yaw_radians,
-        &pose_end->x, &pose_end->y,
-        &pose_end->yaw_radians);
+      std::map<int, PoseBase*>::iterator pose_end_iter =
+          poses.find(constraint->id_end);
+      CHECK(pose_end_iter != poses.end())
+          << "Pose with ID: " << constraint->id_end << " not found.";
+      Pose2d* pose_end =  static_cast<Pose2d*>(poses[pose_end_iter->first]);
 
-    problem->SetParameterization(&pose_begin->yaw_radians,
-                                angle_local_parameterization);
-    problem->SetParameterization(&pose_end->yaw_radians,
-                                angle_local_parameterization);
+
+      const Eigen::Matrix3d sqrt_information =
+          constraint->information.llt().matrixL();
+      // Ceres will take ownership of the pointer.
+      ceres::CostFunction* cost_function = PoseGraph2dErrorTerm::Create(
+          constraint->x, constraint->y, constraint->yaw_radians, sqrt_information);
+      problem->AddResidualBlock(
+          cost_function, loss_function, &pose_begin->x,
+          &pose_begin->y, &pose_begin->yaw_radians,
+          &pose_end->x, &pose_end->y,
+          &pose_end->yaw_radians);
+
+      problem->SetParameterization(&pose_begin->yaw_radians,
+                                  angle_local_parameterization);
+      problem->SetParameterization(&pose_end->yaw_radians,
+                                  angle_local_parameterization);
+
+    }else if((*constraints_iter)->type == ceres::examples::EDGE_SE2_XY){
+
+        //this edge is from pose to landmark
+
+        const Constraint2dXY* constraint = static_cast<Constraint2dXY*>(*constraints_iter);
+
+        std::map<int, PoseBase*>::iterator pose_begin_iter =
+            poses.find(constraint->id_begin);
+        CHECK(pose_begin_iter != poses.end())
+            << "Pose with ID: " << constraint->id_begin << " not found.";
+        Pose2d* pose_begin =  static_cast<Pose2d*>(poses[pose_begin_iter->first]);
+
+
+        std::map<int, PoseBase*>::iterator pose_end_iter =
+            poses.find(constraint->id_end);
+        CHECK(pose_end_iter != poses.end())
+            << "Pose with ID: " << constraint->id_end << " not found.";
+        Pose2dXY* pose_end =  static_cast<Pose2dXY*>(poses[pose_end_iter->first]);
+
+
+        const Eigen::Matrix2d sqrt_information =
+            constraint->information.llt().matrixL();
+        // Ceres will take ownership of the pointer.
+        ceres::CostFunction* cost_function = PoseXYGraph2dErrorTerm::Create(
+            constraint->x, constraint->y, sqrt_information);
+        problem->AddResidualBlock(
+            cost_function, loss_function, &pose_begin->x,
+            &pose_begin->y, &pose_begin->yaw_radians,
+            &pose_end->x, &pose_end->y);
+
+        problem->SetParameterization(&pose_begin->yaw_radians,
+                                    angle_local_parameterization);
+    }
   }
 
   // The pose graph optimization problem has three DOFs that are not fully
@@ -163,6 +199,7 @@ void ReadConstraint(std::ifstream& infile,
                     std::vector<ConstraintBase*> &constraints) {
   Constraint2d* constraint = new Constraint2d();
   constraint->deposit(infile);
+  constraint -> type = ceres::examples::EDGE_SE2;
   constraints.push_back(constraint);
 }
 
@@ -171,6 +208,7 @@ void ReadConstraintXY(std::ifstream& infile,
                     std::vector<ConstraintBase*> &constraints) {
   Constraint2dXY* constraint = new Constraint2dXY();
   constraint->deposit(infile);
+  constraint -> type = ceres::examples::EDGE_SE2_XY;
   constraints.push_back(constraint);
 }
 
@@ -190,6 +228,7 @@ bool ReadVertex(std::ifstream& infile,
 
   Pose2d* pose = new Pose2d(x,y,yaw);
   poses[id] = pose;
+  poses[id] -> type = ceres::examples::VERTEX_SE2;
 
   return true;
 }
@@ -197,7 +236,7 @@ bool ReadVertex(std::ifstream& infile,
 bool ReadVertexXY(std::ifstream& infile,
                 std::map<int, PoseBase*> &poses) {
   int id;
-  int x, y;
+  double x, y;
   infile >> id >> x >> y;
 
   // Ensure we don't have duplicate poses.
@@ -208,6 +247,7 @@ bool ReadVertexXY(std::ifstream& infile,
 
   Pose2dXY* pose = new Pose2dXY(x,y);
   poses[id] = pose;
+  poses[id] -> type = ceres::examples::VERTEX_XY;
 
   return true;
 }

@@ -49,7 +49,7 @@ Eigen::Matrix<T, 2, 2> RotationMatrix2D(T yaw_radians) {
 }
 
 // Computes the error term for two poses that have a relative pose measurement
-// between them. Let the hat variables be the measurement.
+// between them. Let the hat variables be the measurementas
 //
 // residual =  information^{1/2} * [  r_a^T * (p_b - p_a) - \hat{p_ab}   ]
 //                                 [ Normalize(yaw_b - yaw_a - \hat{yaw_ab}) ]
@@ -95,6 +95,7 @@ class PoseGraph2dErrorTerm {
         x_ab, y_ab, yaw_ab_radians, sqrt_information)));
   }
 
+
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
  private:
@@ -104,6 +105,53 @@ class PoseGraph2dErrorTerm {
   const double yaw_ab_radians_;
   // The inverse square root of the measurement covariance matrix.
   const Eigen::Matrix3d sqrt_information_;
+};
+
+class PoseXYGraph2dErrorTerm {
+ public:
+  PoseXYGraph2dErrorTerm(double x_ab, double y_ab,
+                       const Eigen::Matrix2d& sqrt_information)
+      : p_ab_(x_ab, y_ab),
+        sqrt_information_(sqrt_information) {}
+
+  template <typename T>
+  bool operator()(const T* const x_a, const T* const y_a, const T* const yaw_a,
+                  const T* const x_b, const T* const y_b, T* residuals_ptr)
+                  const {
+    const Eigen::Matrix<T, 2, 1> p_a(*x_a, *y_a);
+    const Eigen::Matrix<T, 2, 1> p_b(*x_b, *y_b);
+
+    Eigen::Map<Eigen::Matrix<T, 2, 1> > residuals_map(residuals_ptr);
+
+    residuals_map.template head<2>() =
+        RotationMatrix2D(*yaw_a).transpose() * (p_b - p_a) -
+        p_ab_.cast<T>();
+    //residuals_map(2) = ceres::examples::NormalizeAngle(
+    //    (*yaw_b - *yaw_a) - static_cast<T>(yaw_ab_radians_));
+
+    // Scale the residuals by the square root information matrix to account for
+    // the measurement uncertainty.
+    residuals_map = sqrt_information_.template cast<T>() * residuals_map;
+
+    return true;
+  }
+
+  static ceres::CostFunction* Create(double x_ab, double y_ab,
+                                     const Eigen::Matrix2d& sqrt_information) {
+    return (new ceres::AutoDiffCostFunction<PoseXYGraph2dErrorTerm, 2, 1, 1, 1, 1,
+                                            1>(new PoseXYGraph2dErrorTerm(
+        x_ab, y_ab, sqrt_information)));
+  }
+
+
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+ private:
+  // The position of B relative to A in the A frame.
+  const Eigen::Vector2d p_ab_;
+
+  // The inverse square root of the measurement covariance matrix.
+  const Eigen::Matrix2d sqrt_information_;
 };
 
 }  // namespace examples

@@ -43,8 +43,20 @@
 namespace ceres {
 namespace examples {
 
+enum POSE{
+  VERTEX_SE2,
+  VERTEX_XY,
+};
+
+enum CONSTRAINT{
+  EDGE_SE2,
+  EDGE_SE2_XY,
+};
+
 struct PoseBase{
   virtual ~PoseBase(){};
+  ceres::examples::POSE type;
+
 
   // The name of the data type in the g2o file format.
   static std::string name() {
@@ -62,6 +74,7 @@ struct Pose2d : public PoseBase {
   {
     // Normalize the angle between -pi to pi.
     yaw_radians = NormalizeAngle(yaw_radians);
+    type = VERTEX_SE2;
   }
 
   // The name of the data type in the g2o file format.
@@ -81,13 +94,17 @@ struct Pose2dXY :public PoseBase {
     return "VERTEX_XY";
   }
 
-  Pose2dXY(double x_, double y_):x(x_), y(y_){}
+  Pose2dXY(double x_, double y_):x(x_), y(y_){
+    type = VERTEX_XY;
+  }
 
 };
 
 struct ConstraintBase{
   virtual ~ConstraintBase(){};
   // The name of the data type in the g2o file format.
+
+  ceres::examples::CONSTRAINT type;
 
   virtual void deposit(std::istream& input) = 0;
 
@@ -126,6 +143,7 @@ struct Constraint2d : public ConstraintBase {
 
     // Normalize the angle between -pi to pi.
     yaw_radians = NormalizeAngle(yaw_radians);
+    type = EDGE_SE2;
   }
 
   // The name of the data type in the g2o file format.
@@ -157,6 +175,7 @@ struct Constraint2dXY : public ConstraintBase {
 
     // Set the lower triangular part of the information matrix.
     information(1, 0) = information(0, 1);
+    type = EDGE_SE2_XY;
 
   }
 
