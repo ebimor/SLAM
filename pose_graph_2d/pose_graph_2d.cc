@@ -302,7 +302,7 @@ bool ReadG2oFile(const std::string& filename,
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
-  CERES_GFLAGS_NAMESPACE::ParseCommandLineFlags(&argc, &argv, true);
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   CHECK(FLAGS_input != "") << "Need to specify the filename to read.";
 

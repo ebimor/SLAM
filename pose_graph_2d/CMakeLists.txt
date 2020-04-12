@@ -28,12 +28,18 @@
 #
 # Author: vitus@google.com (Michael Vitus)
 
-if (GFLAGS)
-  add_executable(pose_graph_2d
-    angle_local_parameterization.h
-    normalize_angle.h
-    pose_graph_2d.cc
-    pose_graph_2d_error_term.h
-    types.h)
-  target_link_libraries(pose_graph_2d ceres ${GFLAGS_LIBRARIES})
-endif (GFLAGS)
+cmake_minimum_required(VERSION 2.8)
+project(posegraph2D)
+
+find_package(Ceres REQUIRED)
+
+
+include_directories(${CERES_INCLUDE_DIRS})
+
+add_executable(pose_graph_2d
+			   angle_local_parameterization.h
+			   normalize_angle.h
+			   pose_graph_2d.cc
+			   pose_graph_2d_error_term.h
+			   types_extended.h)
+target_link_libraries(pose_graph_2d ceres ${CERES_INCLUDE_DIRS})

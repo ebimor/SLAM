@@ -13,6 +13,19 @@ This package defines the necessary Ceres cost functions needed to model the
 solve the problem. The cost functions are shown for instruction purposes and can
 be speed up by using analytical derivatives which take longer to implement.
 
+Compile the package
+-----------------
+
+Install google ceres
+
+then
+
+```
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..  # it has to be release mode otherwise program will be super slow
+make
+```
+
 Running
 -----------
 This package includes an executable `pose_graph_2d` that will read a problem
