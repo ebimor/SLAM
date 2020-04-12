@@ -13,6 +13,16 @@ This package defines the necessary Ceres cost functions needed to model the
 solve the problem. The cost functions are shown for instruction purposes and can
 be speed up by using analytical derivatives which take longer to implement.
 
+This package is an extension of the google ceres exampel to support landmarks and 
+pose-to-landmarks constraints. 
+
+![OPtimization Ouput](https://https://github.com/ebimor/SLAM/pose_graph_2d/output.png)
+
+This data is obtained via processing the input intel.data in homework 10 of the Robot Mapping course by Cyrill Stachniss.
+Use this script https://github.com/ebimor/SLAM/blob/master/lsslam_framework/octave/create_g2o.m! Other avialable data for intel.g2o
+does not include the pose-to-landmark edges. FWIW, this homework has been also done via octave and g20 library and all of the codes
+are available in this repository.
+
 Compile the package
 -----------------
 
@@ -22,7 +32,7 @@ then
 
 ```
 mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..  # it has to be release mode otherwise program will be super slow
+cmake -DCMAKE_BUILD_TYPE=Release ..  # it has to be in release mode otherwise program will be super slow
 make
 ```
 
@@ -43,7 +53,8 @@ pose_id x y yaw_radians
 ...
 ```
 
-where `pose_id` is the corresponding integer ID from the file definition. Note,
+where `pose_id` is the corresponding integer ID from the file definition. For landmarks, there is no
+orientation data. Note,
 the file will be sorted in ascending order for the `pose_id`.
 
 The executable `pose_graph_2d` has one flag `--input` which is the path to the
