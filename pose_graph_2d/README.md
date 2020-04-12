@@ -13,7 +13,7 @@ This package defines the necessary Ceres cost functions needed to model the
 solve the problem. The cost functions are shown for instruction purposes and can
 be speed up by using analytical derivatives which take longer to implement.
 
-This package is an extension of the google ceres exampel to support landmarks and 
+This package is an extension of the google ceres example to support optimization with respect to landmarks and 
 pose-to-landmarks constraints. 
 
 ![OPtimization Ouput](https://github.com/ebimor/SLAM/blob/master/pose_graph_2d/output.png)
