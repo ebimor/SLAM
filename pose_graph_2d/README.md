@@ -16,7 +16,7 @@ be speed up by using analytical derivatives which take longer to implement.
 This package is an extension of the google ceres exampel to support landmarks and 
 pose-to-landmarks constraints. 
 
-![OPtimization Ouput](https://https://github.com/ebimor/SLAM/pose_graph_2d/output.png)
+![OPtimization Ouput](https://github.com/ebimor/SLAM/pose_graph_2d/output.png)
 
 This data is obtained via processing the input intel.data in homework 10 of the Robot Mapping course by Cyrill Stachniss.
 Use this script https://github.com/ebimor/SLAM/blob/master/lsslam_framework/octave/create_g2o.m! Other avialable data for intel.g2o
